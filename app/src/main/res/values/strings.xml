@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">HAE</string>
+    <string name="app_launcher">App Launcher</string>
+    <string name="city">City</string>
+    <string name="country">Country</string>
+    <string name="temp">%d C</string>
+    <string name="desc">Description</string>
+    <string name="back">Back</string>
+</resources>
