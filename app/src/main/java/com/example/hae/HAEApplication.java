@@ -20,7 +20,7 @@ public class HAEApplication extends Application {
     public void onCreate() {
         super.onCreate();
         cronetEngine = createDefaultCronetEngine(getApplicationContext());
-        cronetCallbackExecutorService = Executors.newFixedThreadPool(4);
+        cronetCallbackExecutorService = Executors.newFixedThreadPool(8);
         if(haeApplication == null){
             haeApplication =new HAEApplication();
         }
