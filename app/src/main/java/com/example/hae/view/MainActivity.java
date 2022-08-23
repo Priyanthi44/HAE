@@ -60,8 +60,8 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         setUpViews();
-        downloadAppsList();
         downloadData();
+        downloadAppsList();
 
     }
 
@@ -221,7 +221,7 @@ public class MainActivity extends AppCompatActivity {
         public void onReceive(Context context, Intent intent) {
             int level = intent.getIntExtra(BatteryManager.EXTRA_LEVEL, 0);
             progressBar.setProgress(level);
-            batteryLevel.setText(String.format(getResources().getString(R.string.bat_level),level) );
+            batteryLevel.setText("Battery Level is" +level +" %" );
         }
     };
 
