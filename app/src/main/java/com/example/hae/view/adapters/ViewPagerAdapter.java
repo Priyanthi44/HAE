@@ -7,6 +7,7 @@ import android.graphics.drawable.Drawable;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -65,20 +66,14 @@ public class ViewPagerAdapter extends RecyclerView.Adapter<ViewPagerAdapter.View
             }
         }else{
             holder.appName.setText(apps.get(position).name);
-            int icon =apps.get(position).icon;
-            if(icon>0) {
+            Drawable icon =apps.get(position).icon;
                 try {
-                    holder.appName.setCompoundDrawablesWithIntrinsicBounds(icon, 0, 0, 0);
+                    holder.icon.setImageDrawable(icon);
                 }catch(Resources.NotFoundException e){
                     e.printStackTrace();
                 }
-                holder.itemView.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View view) {
-                        itemClicked.setValue(view);
-                    }
-                });
-            }
+                holder.itemView.setOnClickListener(view -> itemClicked.setValue(view));
+
         }
     }
     private Runnable runnable = new Runnable() {
@@ -108,6 +103,7 @@ public class ViewPagerAdapter extends RecyclerView.Adapter<ViewPagerAdapter.View
         TextView temperature;
         TextView description;
         TextView appName;
+        ImageView icon;
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -116,6 +112,7 @@ public class ViewPagerAdapter extends RecyclerView.Adapter<ViewPagerAdapter.View
             temperature=itemView.findViewById(R.id.temp);
             description =itemView.findViewById(R.id.desc);
             appName =itemView.findViewById(R.id.app);
+            icon =itemView.findViewById(R.id.app_icon);
 
                 itemView.setTag(this);
                 itemView.setOnClickListener(mOnItemClickListener);

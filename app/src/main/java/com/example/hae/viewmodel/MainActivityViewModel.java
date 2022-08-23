@@ -15,6 +15,7 @@ import java.util.List;
 
 public class MainActivityViewModel extends ViewModel {
     MutableLiveData<Boolean> weatherListSet = new MutableLiveData<>();
+    MutableLiveData<Boolean> appListSet = new MutableLiveData<>();
     List<weather> weatherList = new ArrayList<>();
     List<AppList> apps;
     int count;
@@ -32,13 +33,16 @@ public class MainActivityViewModel extends ViewModel {
     public LiveData<Boolean> getWeatherListSet() {
         return weatherListSet;
     }
-
+    public LiveData<Boolean> getAppListSet() {
+        return appListSet;
+    }
     public List<weather> getWeatherList() {
         return weatherList;
     }
 
     public void setAppsList(List<AppList> a) {
         apps = a;
+        appListSet.postValue(true);
     }
 
     public List<AppList> getAppsList() {

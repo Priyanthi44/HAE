@@ -1,6 +1,6 @@
 package com.example.hae.view;
 
-import androidx.annotation.NonNull;
+
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.lifecycle.LifecycleOwner;
 import androidx.lifecycle.Observer;
@@ -19,6 +19,7 @@ import android.content.IntentFilter;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.graphics.drawable.Drawable;
 import android.os.BatteryManager;
 import android.os.Bundle;
 import android.os.Handler;
@@ -47,12 +48,10 @@ import java.util.List;
 public class MainActivity extends AppCompatActivity {
     private ProgressBar progressBar;
     private TextView batteryLevel;
-    private Handler sliderHandler = new Handler();
+    private final Handler sliderHandler = new Handler();
     private MainActivityViewModel mainActivityViewModel;
     private ViewPager2 viewPager2;
     private RecyclerView recyclerView;
-
-
 
 
     @Override
@@ -67,20 +66,22 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void downloadAppsList() {
-        PackageManager pm = getPackageManager();
-        List<AppList> apps = new ArrayList<>();
-        @SuppressLint("QueryPermissionsNeeded") List<PackageInfo> packs = getPackageManager().getInstalledPackages(PackageManager.GET_PERMISSIONS);
-        for (int i = 0; i < packs.size(); i++) {
+        getHaeApplication().getCronetCallbackExecutorService().execute(() -> {
+            List<AppList> apps = new ArrayList<>();
+            @SuppressLint("QueryPermissionsNeeded") List<PackageInfo> packs = getPackageManager().getInstalledPackages(PackageManager.GET_PERMISSIONS);
+            for (int i = 0; i < packs.size(); i++) {
                 PackageInfo p = packs.get(i);
                 if (!isSystemPackage(p)) {
                     String appName = p.applicationInfo.loadLabel(getPackageManager()).toString();
-                    int icon = p.applicationInfo.icon;
+                    Drawable icon1 = p.applicationInfo.loadIcon(getPackageManager());
                     String packages = p.applicationInfo.packageName;
-                    apps.add(new AppList(appName, icon, packages));
+                    apps.add(new AppList(appName, icon1, packages));
                 }
             }
             mainActivityViewModel.setAppsList(apps);
-        }
+        });
+
+    }
 
     private void downloadData() {
         for (int i = 0; i < WeatherData.numberOfCities(); i++) {
@@ -96,8 +97,7 @@ public class MainActivity extends AppCompatActivity {
                                 w.city = array;
                                 array = jsonObject.getString("country");
                                 w.country = array;
-                                int tmp = jsonObject.getInt("temperature");
-                                w.temperature = tmp;
+                                w.temperature = jsonObject.getInt("temperature");
                                 array = jsonObject.getString("description");
                                 w.description = array;
                                 mainActivityViewModel.setWeather(w);
@@ -128,40 +128,36 @@ public class MainActivity extends AppCompatActivity {
     private void setUpViews() {
         mainActivityViewModel = new ViewModelProvider(this).get(MainActivityViewModel.class);
 
-        recyclerView =findViewById(R.id.recycler_view);
+        recyclerView = findViewById(R.id.recycler_view);
         recyclerView.setVisibility(View.GONE);
         recyclerView.setHasFixedSize(true);
         recyclerView.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false));
 
         Button button = findViewById(R.id.launch_apps);
-        Context context =this;
-        button.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                //list the apps in the phone
-                if(button.getText().toString().equalsIgnoreCase(getResources().getString(R.string.app_launcher))) {
+        button.setText(getResources().getString(R.string.loading_apps));
+        button.setEnabled(false);
+        Context context = this;
+
+        button.setOnClickListener(view -> {
+            //list the apps in the phone
+
+                if (button.getText().toString().equalsIgnoreCase(getResources().getString(R.string.app_launcher))) {
                     recyclerView.setVisibility(View.VISIBLE);
                     ViewPagerAdapter viewPagerAdapter = new ViewPagerAdapter(null, mainActivityViewModel.getAppsList());
-                    viewPagerAdapter.setOnItemClickListener(onItemClickListener);
-                    viewPagerAdapter.getItemClicked().observe((LifecycleOwner) context, new Observer<View>() {
-                        @Override
-                        public void onChanged(View view) {
-                            RecyclerView.ViewHolder viewHolder = (RecyclerView.ViewHolder) view.getTag();
-                            int pos =viewHolder.getAdapterPosition();
-                            Intent intent = getPackageManager().getLaunchIntentForPackage( mainActivityViewModel.getAppsList().get(pos).packages);
-                            if(intent != null){
-                                startActivity(intent);
-                            }
+                    viewPagerAdapter.getItemClicked().observe((LifecycleOwner) context, view1 -> {
+                        RecyclerView.ViewHolder viewHolder = (RecyclerView.ViewHolder) view1.getTag();
+                        int pos = viewHolder.getAdapterPosition();
+                        Intent intent = getPackageManager().getLaunchIntentForPackage(mainActivityViewModel.getAppsList().get(pos).packages);
+                        if (intent != null) {
+                            startActivity(intent);
                         }
                     });
                     recyclerView.setAdapter(viewPagerAdapter);
                     button.setText(getResources().getString(R.string.back));
-                }else{
+                } else {
                     recyclerView.setVisibility(View.GONE);
                     button.setText(getResources().getString(R.string.app_launcher));
                 }
-            }
-
 
         });
         this.registerReceiver(broadcastReceiver, new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
@@ -169,6 +165,12 @@ public class MainActivity extends AppCompatActivity {
         progressBar = findViewById(R.id.progressBar);
         viewPager2 = findViewById(R.id.view_pager);
 
+        mainActivityViewModel.getAppListSet().observe(this, aBoolean -> {
+            if(aBoolean){
+                button.setText(getResources().getString(R.string.app_launcher));
+                button.setEnabled(true);
+            }
+        });
 
         mainActivityViewModel.getWeatherListSet().observe(this, new Observer<Boolean>() {
             @Override
@@ -183,12 +185,9 @@ public class MainActivity extends AppCompatActivity {
                     viewPager2.getChildAt(0).setOverScrollMode(RecyclerView.OVER_SCROLL_NEVER);
                     CompositePageTransformer compositePageTransformer = new CompositePageTransformer();
                     compositePageTransformer.addTransformer(new MarginPageTransformer(40));
-                    compositePageTransformer.addTransformer(new ViewPager2.PageTransformer() {
-                        @Override
-                        public void transformPage(@NonNull View page, float position) {
-                            float r = 1 - Math.abs(position);
-                            page.setScaleY(0.85f + r * 0.15f);
-                        }
+                    compositePageTransformer.addTransformer((page, position) -> {
+                        float r = 1 - Math.abs(position);
+                        page.setScaleY(0.85f + r * 0.15f);
                     });
 
                     viewPager2.setPageTransformer(compositePageTransformer);
@@ -206,9 +205,11 @@ public class MainActivity extends AppCompatActivity {
             }
         });
     }
+
     private boolean isSystemPackage(PackageInfo p) {
-       return (p.applicationInfo.flags == ApplicationInfo.FLAG_SYSTEM);
+        return (p.applicationInfo.flags == ApplicationInfo.FLAG_SYSTEM);
     }
+
     private Runnable sliderRunnable = new Runnable() {
         @Override
         public void run() {
@@ -220,7 +221,7 @@ public class MainActivity extends AppCompatActivity {
         public void onReceive(Context context, Intent intent) {
             int level = intent.getIntExtra(BatteryManager.EXTRA_LEVEL, 0);
             progressBar.setProgress(level);
-            batteryLevel.setText("Battery Level is  " + level + " %");
+            batteryLevel.setText(String.format(getResources().getString(R.string.bat_level),level) );
         }
     };
 
@@ -235,10 +236,6 @@ public class MainActivity extends AppCompatActivity {
         super.onPause();
         sliderHandler.removeCallbacks(sliderRunnable);
     }
-    private final View.OnClickListener onItemClickListener =new View.OnClickListener() {
-        @Override
-        public void onClick(View view) {
 
-        }
-    };
+
 }
