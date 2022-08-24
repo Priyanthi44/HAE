@@ -1,6 +1,7 @@
 package com.example.hae.model;
 
 public class WeatherData {
+    //TODO find closest 6 destinations to the GPS and set the cityUrls
     private static String[] cityUrls= {
             "https://weather.bfsah.com/beijing",
             "https://weather.bfsah.com/berlin",

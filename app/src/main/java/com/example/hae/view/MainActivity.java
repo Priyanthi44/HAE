@@ -52,13 +52,14 @@ public class MainActivity extends AppCompatActivity {
     private MainActivityViewModel mainActivityViewModel;
     private ViewPager2 viewPager2;
     private RecyclerView recyclerView;
+    private Context context;
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
+        context =this;
         setUpViews();
         downloadData();
         downloadAppsList();
@@ -72,10 +73,13 @@ public class MainActivity extends AppCompatActivity {
             for (int i = 0; i < packs.size(); i++) {
                 PackageInfo p = packs.get(i);
                 if (!isSystemPackage(p)) {
+                    if (context.getPackageManager().getLaunchIntentForPackage(p.packageName) != null) {
+                        //If you're here, then this is a launch-able app
                     String appName = p.applicationInfo.loadLabel(getPackageManager()).toString();
                     Drawable icon1 = p.applicationInfo.loadIcon(getPackageManager());
                     String packages = p.applicationInfo.packageName;
                     apps.add(new AppList(appName, icon1, packages));
+                }
                 }
             }
             mainActivityViewModel.setAppsList(apps);
@@ -137,7 +141,7 @@ public class MainActivity extends AppCompatActivity {
         button.setText(getResources().getString(R.string.loading_apps));
         button.setEnabled(false);
         Context context = this;
-
+// TODO add functionality : delete apps/ close apps when you come back from the app option(dialog box)
         button.setOnClickListener(view -> {
             //list the apps in the phone
 
@@ -221,7 +225,7 @@ public class MainActivity extends AppCompatActivity {
         public void onReceive(Context context, Intent intent) {
             int level = intent.getIntExtra(BatteryManager.EXTRA_LEVEL, 0);
             progressBar.setProgress(level);
-            batteryLevel.setText("Battery Level is" +level +" %" );
+            batteryLevel.setText("Battery Level is " +level +" %" );
         }
     };
 

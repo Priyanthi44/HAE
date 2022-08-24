@@ -11,19 +11,14 @@ import java.util.concurrent.Executors;
 public class HAEApplication extends Application {
     private CronetEngine cronetEngine;
     private ExecutorService cronetCallbackExecutorService;
-    private static HAEApplication haeApplication;
-    public static HAEApplication getInstance() {
-        return haeApplication;
-    }
+
 
     @Override
     public void onCreate() {
         super.onCreate();
         cronetEngine = createDefaultCronetEngine(getApplicationContext());
         cronetCallbackExecutorService = Executors.newFixedThreadPool(8);
-        if(haeApplication == null){
-            haeApplication =new HAEApplication();
-        }
+
     }
 
     private CronetEngine createDefaultCronetEngine(Context haeApplication) {
